@@ -1,0 +1,14 @@
+{
+  "name": "claudewhip",
+  "owner": { "name": "ClaudeWhip contributors" },
+  "description": "Local marketplace for the ClaudeWhip plugin",
+  "plugins": [
+    {
+      "name": "whip",
+      "source": "./",
+      "description": "Slap your MacBook, whip Claude Code.",
+      "version": "0.2.1",
+      "category": "fun"
+    }
+  ]
+}

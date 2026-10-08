@@ -1,0 +1,17 @@
+{
+  "name": "claudewhip",
+  "version": "0.2.1",
+  "description": "Slap your MacBook, whip Claude Code. Status line, hooks and slash commands; zero npm dependencies.",
+  "license": "MIT",
+  "private": true,
+  "bin": { "whip": "bin/whip" },
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node --test \"test/unit/*.test.js\" \"test/contract/*.test.js\"",
+    "test:go": "cd sensord && go test ./...",
+    "test:e2e": "node test/e2e/e2e-tmux.js",
+    "test:install": "bash test/e2e/install-roundtrip.sh",
+    "bench": "node scripts/bench-statusline.js",
+    "sounds": "node scripts/gen-sounds.js"
+  }
+}

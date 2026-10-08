@@ -1,0 +1,367 @@
+#!/usr/bin/env node
+'use strict';
+// whip: the ClaudeWhip command line. Zero dependencies.
+const fs = require('fs');
+const path = require('path');
+const { paths } = require('../lib/paths');
+const config = require('../lib/config');
+const store = require('../lib/store');
+const { deliver } = require('../lib/deliver');
+const { painter, colorEnabled, detectTheme } = require('../lib/ansi');
+const render = require('../lib/render');
+const stats = require('../lib/stats');
+
+const ROOT = path.resolve(__dirname, '..');
+const VERSION = require('../package.json').version;
+
+// Flags that never take a value: `--plain kawaii` must leave "kawaii" positional.
+const BOOLEAN_FLAGS = new Set(['plain', 'preview', 'ascii', 'watch', 'no-color', 'yes', 'for-prompt', 'no-hard', 'hard', 'help', 'light']);
+
+function parseArgs(argv) {
+  const out = { _: [] };
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i];
+    if (a === '--') {
+      out._.push(...argv.slice(i + 1));
+      break;
+    }
+    if (a.startsWith('--')) {
+      const [k, v] = a.slice(2).split('=', 2);
+      if (v !== undefined) out[k] = v;
+      else if (!BOOLEAN_FLAGS.has(k) && argv[i + 1] !== undefined && !argv[i + 1].startsWith('--')) out[k] = argv[++i];
+      else out[k] = true;
+    } else out._.push(a);
+  }
+  return out;
+}
+
+function paint(args, cfg) {
+  const enabled = args.plain || args['no-color'] ? false : colorEnabled(cfg, process.stdout);
+  return painter(enabled, detectTheme(cfg, paths().settings));
+}
+
+function die(msg, code = 1) {
+  process.stderr.write(`whip: ${msg}\n`);
+  process.exit(code);
+}
+
+const TIER_G = { tap: 0.2, slap: 0.6, wallop: 1.2 };
+
+function describe(r, p) {
+  if (!r.result.accepted) return p.muted(`ignored (${r.result.reason})`);
+  const lh = r.result.hit;
+  const tier = lh.tier === 'wallop' ? p.red('WALLOP') : lh.tier === 'slap' ? p.yellow('slap') : p.green('tap');
+  let s = `${tier} #${lh.slapNo} ${render.fmtG(lh.g)}${lh.combo > 1 ? ` combo x${lh.combo}` : ''}${lh.escalated ? ' (escalated)' : ''}`;
+  const targets = r.targets.map((t) => t.id.slice(0, 8));
+  s += targets.length ? p.muted(` → ${targets.join(', ')}`) : p.muted(' → no active session (counted only)');
+  for (const h of r.hard || []) s += h.ok ? p.orange(` [hard whip via ${h.via}]`) : p.muted(` [no hard whip: ${h.why}]`);
+  return s;
+}
+
+const commands = {
+  simulate(args) {
+    const cfg = config.loadConfig();
+    const p = paint(args, cfg);
+    let g = args.g !== undefined ? Number(args.g) : args._[0] !== undefined && !TIER_G[args._[0]] ? Number(args._[0]) : undefined;
+    const tierName = args.tier || (TIER_G[args._[0]] ? args._[0] : undefined);
+    if (g === undefined) g = TIER_G[tierName || 'slap'];
+    if (!Number.isFinite(g) || g < 0) die('--g must be a number of g, e.g. --g 0.6');
+    const count = Math.max(1, Number(args.count) || 1);
+    const every = Math.max(0, Number(args.every) || 600);
+    let i = 0;
+    const one = () => {
+      const r = deliver({ g, source: 'simulate', session: args.session || undefined, tier: args.tier || undefined }, config.loadConfig(), { hard: !args['no-hard'] });
+      console.log(describe(r, p));
+      if (++i < count) setTimeout(one, every);
+    };
+    one();
+  },
+
+  // /whip and hotkeys. Counts like a slap but bypasses cooldown and pause.
+  manual(args) {
+    const cfg = config.loadConfig();
+    const message = args.message || args._.join(' ') || undefined;
+    const session = args.session && !/^\$|^\{/.test(args.session) ? args.session : undefined;
+    // With --for-prompt the slash command carries the message itself, so the
+    // queued whip is banner-only from the start (no double delivery).
+    const forPrompt = !!args['for-prompt'];
+    const r = deliver({ g: Number(args.g) || 0.6, tier: args.tier || 'slap', source: 'manual', session, message, bannerOnly: forPrompt && !!session }, cfg, { hard: !!args.hard });
+    if (forPrompt) {
+      const w = r.result.whip;
+      process.stdout.write(w ? render.messageForClaude(w, cfg) : 'whip: nothing recorded');
+      return;
+    }
+    console.log(describe(r, paint(args, cfg)));
+  },
+
+  status(args) {
+    const cfg = config.loadConfig();
+    if (args.ascii) cfg.ascii = true;
+    const p = painter(!(args.plain || args['no-color']) && colorEnabled(cfg, process.stdout), detectTheme(cfg, paths().settings));
+    const sessions = store.listSessions();
+    const sid = args.session || (store.pickTargets(sessions, cfg)[0] || {}).id;
+    const draw = () => {
+      const state = store.readStateFast();
+      const session = sid ? store.readSession(sid) : null;
+      const input = { model: { display_name: 'Claude' }, cwd: (session && session.cwd) || process.cwd() };
+      return `${render.infoLine(input, null, p, cfg.ascii)}\n${render.whipLane(state, session, cfg, p, Date.now())}`;
+    };
+    if (!args.watch) return console.log(draw());
+    // Live preview: redraw every 100 ms in place (great for demos and GIFs).
+    process.stdout.write('\x1b[?25l');
+    const stop = () => {
+      process.stdout.write('\x1b[?25h\n');
+      process.exit(0);
+    };
+    process.on('SIGINT', stop);
+    process.on('SIGTERM', stop);
+    let first = true;
+    setInterval(() => {
+      const out = draw();
+      process.stdout.write((first ? '' : '\x1b[2F') + out.split('\n').map((l) => l + '\x1b[K').join('\n'));
+      first = false;
+    }, 100);
+  },
+
+  stats(args) {
+    const cfg = config.loadConfig();
+    if (args.ascii) cfg.ascii = true;
+    const p = paint(args, cfg);
+    const state = store.loadState(cfg);
+    const session = args.session && !/^\$|^\{/.test(args.session) ? args.session : undefined;
+    console.log(stats.render(state, Date.now(), { session, p, ascii: cfg.ascii, cfg }));
+  },
+
+  config(args) {
+    const [sub = 'show', key, ...rest] = args._;
+    const value = rest.join(' ');
+    const file = paths().config;
+    switch (sub) {
+      case 'show': {
+        const cfg = config.loadConfig();
+        const user = require('../lib/fsx').readJson(file);
+        console.log(`# effective config (${file})`);
+        printFlat(cfg, '', user.ok ? user.value : {});
+        console.log('\n# set with: whip config set <key> <value>   (e.g. thresholds.slapG 0.4, sound true, hardWhip off)');
+        return;
+      }
+      case 'get': {
+        const v = key.split('.').reduce((o, k) => (o == null ? undefined : o[k]), config.loadConfig());
+        if (v === undefined) die(`unknown setting: ${key}`);
+        console.log(typeof v === 'object' ? JSON.stringify(v) : String(v));
+        return;
+      }
+      case 'set': {
+        if (!key || value === '') die('usage: whip config set <key> <value>');
+        let partial;
+        try {
+          partial = config.parseSetting(key, value);
+        } catch (err) {
+          die(err.message);
+        }
+        config.saveUserConfig(partial);
+        console.log(`${key} = ${JSON.stringify(key.split('.').reduce((o, k) => o[k], config.loadConfig()))}`);
+        return;
+      }
+      case 'unset':
+      case 'reset': {
+        if (!key) die(`usage: whip config ${sub} <key>`);
+        const { readJson, writeJsonAtomic } = require('../lib/fsx');
+        const r = readJson(file);
+        if (r.ok) {
+          const parts = key.split('.');
+          let o = r.value;
+          for (const p of parts.slice(0, -1)) o = o && o[p];
+          if (o) delete o[parts[parts.length - 1]];
+          writeJsonAtomic(file, r.value);
+        }
+        console.log(`${key} reset to default`);
+        return;
+      }
+      case 'path':
+        return console.log(file);
+      case 'edit': {
+        if (!fs.existsSync(file)) config.saveUserConfig({});
+        const editor = process.env.VISUAL || process.env.EDITOR || 'vi';
+        require('child_process').spawnSync(editor, [file], { stdio: 'inherit' });
+        return;
+      }
+      default:
+        die(`unknown config command ${sub} (show|get|set|unset|path|edit)`);
+    }
+  },
+
+  on() {
+    store.setPaused(false, config.loadConfig());
+    console.log('whip is ON — slaps reach Claude again');
+  },
+  off() {
+    store.setPaused(true, config.loadConfig());
+    console.log('whip is OFF — the sensor keeps running, hits are ignored (/whip still works)');
+  },
+
+  sessions(args) {
+    const cfg = config.loadConfig();
+    const p = paint(args, cfg);
+    const now = Date.now();
+    const list = store.listSessions().sort((a, b) => (b.lastActive || 0) - (a.lastActive || 0));
+    const target = (store.pickTargets(list, cfg, now)[0] || {}).id;
+    if (!list.length) return console.log('no sessions yet (start Claude Code with the plugin enabled)');
+    for (const s of list) {
+      const mark = s.id === target ? p.orange('→') : ' ';
+      const age = render.fmtDuration(now - Math.max(s.lastSeen || 0, s.lastActive || 0));
+      const bits = [s.busy ? p.yellow('busy') : p.muted('idle'), `seen ${age} ago`];
+      if (s.tmuxPane) bits.push(`tmux ${s.tmuxPane}`);
+      if (s.pending) bits.push(p.orange(`pending ${s.pending.tier}`));
+      console.log(`${mark} ${s.id.slice(0, 8)}  ${p.accent(path.basename(s.cwd || '?'))}  ${bits.join(' · ')}`);
+    }
+  },
+
+  log(args) {
+    const n = Number(args.n) || 20;
+    const lines = require('../lib/fsx').readLines(paths().log).slice(-n);
+    for (const l of lines) console.log(JSON.stringify(l));
+  },
+
+  bridge(args) {
+    process.argv = [process.argv[0], path.join(ROOT, 'bridge', 'bridge.js'), ...(args.socket ? ['--socket', args.socket] : [])];
+    require('../bridge/bridge.js').run(args.socket || paths().sensorSocket);
+  },
+
+  doctor(args) {
+    const ok = require('../lib/doctor').run({ root: ROOT, p: paint(args, config.loadConfig()), fix: !!args.fix });
+    process.exitCode = ok ? 0 : 1;
+  },
+
+  calibrate(args) {
+    require('../lib/calibrate').run({ socket: args.socket || paths().sensorSocket, p: paint(args, config.loadConfig()), yes: !!args.yes });
+  },
+
+  settings(args) {
+    const settings = require('../lib/settings');
+    const sub = args._[0] || 'status';
+    if (sub === 'backup') {
+      const rec = settings.backup();
+      console.log(`  · ${rec.backup ? `backed up settings.json → ${rec.backup}` : 'no settings.json yet (uninstall will remove the one we create)'}`);
+    } else if (sub === 'install') {
+      const res = settings.install({ repoRoot: ROOT, mode: args.mode || 'wrap', refreshInterval: args.refresh !== undefined ? Number(args.refresh) : 1, spinner: !!args.spinner });
+      if (res.wrapped) config.saveUserConfig({ wrapStatusLine: res.wrapped });
+      for (const n of res.notes) console.log(`  · ${n}`);
+      console.log(`  · statusLine → ${settings.statusCommand(ROOT)}`);
+    } else if (sub === 'uninstall') {
+      const res = settings.uninstall();
+      console.log(`  · ${res.note}`);
+      if (res.failed) process.exitCode = 1; // uninstall.sh stops before deleting install.json
+    } else {
+      console.log(JSON.stringify(settings.status(), null, 2));
+    }
+  },
+
+  reset(args) {
+    if (!args.yes) die('this wipes all counters and sessions; run `whip reset --yes`');
+    for (const f of [paths().state, paths().events, paths().eventsOld, paths().log]) fs.rmSync(f, { force: true });
+    fs.rmSync(paths().sessions, { recursive: true, force: true });
+    console.log('whip state reset');
+  },
+
+  // whip persona            list personalities (→ = current)
+  // whip persona rough      switch
+  // whip persona --preview  show every personality's faces and lines
+  persona(args) {
+    const personas = require('../lib/personas');
+    const cfg = config.loadConfig();
+    const p = paint(args, cfg);
+    const list = personas.all(paths().home);
+    const want = args._[0];
+    if (want) {
+      if (!list[want]) die(`unknown personality "${want}" (have: ${Object.keys(list).join(', ')})`);
+      config.saveUserConfig({ personality: want });
+      const pe = list[want];
+      console.log(`SWITCHED: personality → ${p.bold(pe.name)} ${p.face(pe.faces.idle[cfg.ascii ? 1 : 0])}  ${p.muted(pe.blurb)}`);
+      console.log(p.muted(`  says things like: "${pe.voiceSlap[0]}"  ·  banner word: ${pe.whack}`));
+      return;
+    }
+    for (const pe of Object.values(list)) {
+      const cur = pe.id === cfg.personality ? p.orange('→') : ' ';
+      const faces = ['idle', 'hit', 'wrecked', 'recovering'].map((k) => pe.faces[k][cfg.ascii ? 1 : 0]).join(' ');
+      console.log(`${cur} ${p.bold(pe.id.padEnd(8))} ${p.face(faces)}  ${p.muted(pe.blurb)}${pe.custom ? p.muted(' (yours)') : ''}`);
+      if (args.preview) {
+        console.log(`    ${p.muted('lane:')}  ${pe.lines.empty}`);
+        console.log(`    ${p.muted('after a hit:')} "${pe.apology[0]}"   ${p.muted('yelps:')} "${pe.voiceSlap[0]}" / "${pe.voiceWallop[0]}"`);
+        console.log(`    ${p.muted('Claude opens with:')} ${pe.faces.hit[cfg.ascii ? 1 : 0]} ${pe.flinch}`);
+      }
+    }
+    console.log(p.muted(`\nswitch: whip persona <id>   ·   add your own: ${personas.customDir(paths().home)}/<id>.json`));
+  },
+
+  // A slap pad for trying it without a sensor: t / s / w (or 1-9 for 0.1-1.5 g).
+  pad(args) {
+    const cfg = config.loadConfig();
+    const p = paint(args, cfg);
+    const keys = { t: 0.2, s: 0.62, w: 1.3 };
+    const say = (s) => process.stdout.write(`\r\x1b[K${s}`);
+    console.log(`${p.bold('slap pad')} ${p.muted('· t = tap · s = slap · w = WALLOP · 1-9 = custom force · q = quit')}`);
+    say(p.muted('waiting for your hand…'));
+    if (!process.stdin.isTTY) die('whip pad needs a terminal');
+    process.stdin.setRawMode(true);
+    process.stdin.resume();
+    process.stdin.on('data', (b) => {
+      const k = b.toString();
+      if (k === 'q' || k === '\u0003') {
+        process.stdout.write('\n');
+        process.exit(0);
+      }
+      let g = keys[k.toLowerCase()];
+      if (g === undefined && /^[1-9]$/.test(k)) g = Math.round((Number(k) / 9) * 1.5 * 100) / 100;
+      if (g === undefined) return;
+      say(describe(deliver({ g, source: 'simulate', session: args.session || undefined }, config.loadConfig()), p));
+    });
+  },
+
+  demo(args) {
+    require('../scripts/demo').run(args);
+  },
+
+  version() {
+    console.log(`whip ${VERSION}`);
+  },
+
+  help() {
+    console.log(`whip ${VERSION} — slap your MacBook, whip Claude Code
+
+  whip simulate [--g 0.6 | tap|slap|wallop] [--count 3 --every 600] [--session ID] [--no-hard]
+  whip manual [message] [--session ID]     manual whip (what /whip runs; bind it to a hotkey)
+  whip pad                                 slap pad: t / s / w keys instead of a sensor
+  whip status [--watch] [--ascii]          render the status line whip lane
+  whip stats [--plain]                     the /slaps screen
+  whip config [show|get|set|unset|path|edit] ...
+  whip persona [id] [--preview]            personalities: classic, rough, timid, kawaii, butler, yours
+  whip on | off                            resume / pause (sensor keeps running)
+  whip sessions                            known Claude Code sessions (→ = target)
+  whip doctor                      check sensor, socket, hooks, status line, tmux
+  whip calibrate                           tap / slap / WALLOP wizard (needs the sensor)
+  whip bridge [--socket PATH]              run the bridge in the foreground
+  whip log [--n 20]                        recent hook log
+  whip settings install|uninstall|status   statusLine wiring in ~/.claude/settings.json
+  whip reset --yes                         wipe counters
+  whip demo                                scripted show for README GIFs
+
+state: ${paths().home}`);
+  },
+};
+
+function printFlat(obj, prefix, user) {
+  for (const [k, v] of Object.entries(obj)) {
+    const key = prefix ? `${prefix}.${k}` : k;
+    const u = user && typeof user === 'object' ? user[k] : undefined;
+    if (v && typeof v === 'object' && !Array.isArray(v)) printFlat(v, key, u);
+    else console.log(`${key.padEnd(22)} ${JSON.stringify(v)}${u !== undefined ? '' : '  (default)'}`);
+  }
+}
+
+const argv = process.argv.slice(2);
+const cmd = argv[0] && !argv[0].startsWith('-') ? argv.shift() : 'help';
+const alias = { hit: 'manual', sim: 'simulate', '--version': 'version', '-v': 'version', '--help': 'help', '-h': 'help' };
+const fn = commands[alias[cmd] || cmd];
+if (!fn) die(`unknown command: ${cmd} (try whip help)`);
+fn(parseArgs(argv));

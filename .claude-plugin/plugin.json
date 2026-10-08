@@ -1,0 +1,9 @@
+{
+  "name": "whip",
+  "displayName": "ClaudeWhip",
+  "version": "0.2.1",
+  "description": "Slap your MacBook, whip Claude Code: hooks deliver the whip to Claude, the status line shows it, /slaps keeps score.",
+  "author": { "name": "ClaudeWhip contributors" },
+  "license": "MIT",
+  "keywords": ["fun", "statusline", "hooks", "accelerometer", "macos"]
+}

@@ -1,0 +1,6 @@
+github.com/ebitengine/purego v0.10.2 h1:W809HbnvzAxgdm+aOvlSekrM16wGCdT/e76+9tS7gzE=
+github.com/ebitengine/purego v0.10.2/go.mod h1:iIjxzd6CiRiOG0UyXP+V1+jWqUXVjPKLAI0mRfJZTmQ=
+github.com/taigrr/apple-silicon-accelerometer v0.4.0 h1:bG6zXMFx81EfT/iAvj3lTGq5vTtlXQIJtEx4VWoE358=
+github.com/taigrr/apple-silicon-accelerometer v0.4.0/go.mod h1:dOpDPcUi5zw/X0Zoglaa3tm+Kvum/jn47QYf1zTvC/w=
+golang.org/x/sys v0.47.0 h1:o7XGOvZQCADBQQ4Y7VNq2dRWQR7JmOUW8Kxx4ZsNgWs=
+golang.org/x/sys v0.47.0/go.mod h1:4GL1E5IUh+htKOUEOaiffhrAeqysfVGipDYzABqnCmw=

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- ClaudeWhip bridge: runs as you. Turns sensor events into whips. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.claudewhip.bridge</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>{{NODE}}</string>
+    <string>{{REPO}}/bridge/bridge.js</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    <!-- launchd passes neither CLAUDE_CONFIG_DIR nor WHIP_HOME: pin the state
+         directory the installer resolved, so bridge and hooks agree. -->
+    <key>WHIP_HOME</key>
+    <string>{{WHIP_HOME}}</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Interactive</string>
+  <key>StandardOutPath</key>
+  <string>{{WHIP_HOME}}/bridge.log</string>
+  <key>StandardErrorPath</key>
+  <string>{{WHIP_HOME}}/bridge.log</string>
+</dict>
+</plist>
