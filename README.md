@@ -124,6 +124,31 @@ Colours are ANSI 256 with a separate light palette (it follows Claude Code's
 `theme` setting, or `COLORFGBG`). `NO_COLOR` turns them off, and
 `whip config set ascii true` replaces every emoji and wide character.
 
+## Claude Desktop (mod)
+
+Claude Desktop's Code tab doesn't run the `statusLine` script, so it gets a
+**mod** instead: `mod/whip-desk`, a function-hook plugin for Claude Code
+2.1.286+ on desktop and 2.1.287+ in the terminal. It draws the same whip lane
+as a **band above the prompt**, with these buttons:
+
+- **👋 tap**, **✋ slap** and **💥 WALLOP** send a hit at forces inside your
+  calibrated tiers.
+- **📊 stats** opens a native stats pane (also `/whip-stats`), with no model
+  turn.
+- **🎭** cycles through the personalities.
+
+Every whip that lands shows a **toast**. The mod only reads `~/.claude/whip`
+and runs `bin/whip`, so the hooks, bridge and sensor stay the one engine.
+
+```bash
+claude plugin install whip-desk@claudewhip
+```
+
+In the terminal the band is off by default, since the status line already
+shows the lane; turn on the plugin's `terminalBand` option to see it there
+too. `node scripts/build-mod.js` regenerates the mod's persona data from
+`lib/personas.js`, and `claude plugin test mod/whip-desk` runs its tests.
+
 ## How the whip reaches Claude
 
 ```
