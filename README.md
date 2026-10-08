@@ -1,5 +1,7 @@
 # ClaudeWhip
 
+[![CI](https://github.com/witkowsky/whip/actions/workflows/ci.yml/badge.svg)](https://github.com/witkowsky/whip/actions/workflows/ci.yml)
+
 **Slap your MacBook. Claude Code hurries up.**
 
 ClaudeWhip reads your MacBook's accelerometer. When you slap the palm rest,

@@ -150,6 +150,7 @@ test('status line script: renders two lines and stays under the 50 ms budget', (
   const median = times[Math.floor(times.length / 2)];
   assert.equal(out.split('\n').length, 2, out);
   assert.match(out, /Opus/);
-  assert.ok(median < 50, `median ${median.toFixed(1)} ms`);
+  const budget = Number(process.env.WHIP_PERF_BUDGET_MS) || 50; // CI runners get more room
+  assert.ok(median < budget, `median ${median.toFixed(1)} ms (budget ${budget})`);
   fs.rmSync(dir, { recursive: true, force: true });
 });

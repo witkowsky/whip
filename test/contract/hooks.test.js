@@ -229,7 +229,8 @@ test('hooks are fast enough to sit on every tool call', () => {
   const times = [];
   for (let i = 0; i < 10; i++) times.push(hook('PreToolUse', input('PreToolUse')).ms);
   times.sort((a, b) => a - b);
-  assert.ok(times[5] < 120, `median ${times[5]} ms`);
+  const budget = Math.max(120, Number(process.env.WHIP_PERF_BUDGET_MS) || 0);
+  assert.ok(times[5] < budget, `median ${times[5]} ms (budget ${budget})`);
 });
 
 test('slash commands like /slaps do not swallow a pending whip', () => {

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: macOS · Node ${{ matrix.node }}
+    runs-on: macos-latest # Apple Silicon, like the target machine
+    strategy:
+      fail-fast: false
+      matrix:
+        node: [22, 24]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: sensord/go.mod
+          cache-dependency-path: sensord/go.sum
+
+      - name: Sensor daemon · vet, format, tests
+        working-directory: sensord
+        run: |
+          go vet ./...
+          test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+          go test ./...
+
+      - name: Sensor daemon · build
+        working-directory: sensord
+        run: CGO_ENABLED=0 go build -trimpath -o ../build/whip-sensord .
+
+      - name: Node tests · unit, hook contracts, sensor → bridge integration
+        run: npm test
+        env:
+          # Shared runners are slower than a laptop; the real 50 ms status
+          # line budget is checked locally with `npm run bench`.
+          WHIP_PERF_BUDGET_MS: '250'
+
+      - name: Desktop mod · generated persona data is in sync
+        run: |
+          node scripts/build-mod.js
+          git diff --exit-code mod/
+
+      - name: Shell scripts parse
+        run: for f in install.sh uninstall.sh try.sh scripts/root-install.sh test/e2e/install-roundtrip.sh; do bash -n "$f"; done
+
+      - name: Status line latency (informational)
+        run: node scripts/bench-statusline.js 30 || true
