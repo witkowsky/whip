@@ -50,6 +50,9 @@ The installer:
 3. Merges the `statusLine` into your settings. If you already have one, it
    **wraps** yours: your output becomes line 1 and the whip lane goes
    underneath. `--mode replace` and `--mode keep` are also available.
+   It also sets `refreshInterval: 1` so slaps show up while Claude is idle.
+   Wiring the `statusLine` by hand? Add `"refreshInterval": 1` yourself:
+   without it the line only redraws on CLI events.
 4. Builds and installs the sensor daemon and the bridge (see
    [What runs as root](#what-runs-as-root)).
 5. Optionally adds themed spinner verbs (`--spinner`) and links `whip` into
