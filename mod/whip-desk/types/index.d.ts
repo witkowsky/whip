@@ -47,6 +47,7 @@ declare module 'claude-code' {
       now: number
       stats: string
       customs: Record<string, WhipPersona>
+      hidden: boolean
     }
   }
 }

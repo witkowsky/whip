@@ -133,7 +133,8 @@ const commands = {
   },
 
   config(args) {
-    const [sub = 'show', key, ...rest] = args._;
+    const [sub = 'show', rawKey, ...rest] = args._;
+    const key = rawKey && config.resolveKey(rawKey);
     const value = rest.join(' ');
     const file = paths().config;
     switch (sub) {
