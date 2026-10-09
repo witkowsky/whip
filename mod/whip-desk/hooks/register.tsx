@@ -30,8 +30,6 @@ const S = {
   lastNow: 0,
   terminalBand: false,
   show: true,
-  sound: 'whip config',
-  voice: 'whip config',
 }
 
 async function readJson($: $T, path: string): Promise<any> {
@@ -152,22 +150,10 @@ async function close($: $T): Promise<void> {
   await poll($, true)
 }
 
-// The plugin settings' on/off pickers write through to ~/.claude/whip/config.json,
-// so the bridge (which plays the sounds) sees them; 'whip config' leaves the file alone.
-async function applySettings($: $T): Promise<void> {
-  const cf = (await readJson($, `${S.home}/config.json`)) || {}
-  for (const key of ['sound', 'voice'] as const) {
-    const want = S[key]
-    if (want !== 'on' && want !== 'off') continue
-    if ((cf[key] === true) === (want === 'on') && key in cf) continue
-    await whip($, ['config', 'set', key, want === 'on' ? 'true' : 'false'])
-  }
-}
 
 async function start($: $T): Promise<void> {
   S.home = await findHome($)
   S.sid = await $.session.id()
-  await applySettings($)
   await loadCustoms($)
   await poll($, true)
   $.clock.every(POLL_MS, () => poll($))
@@ -177,8 +163,6 @@ async function start($: $T): Promise<void> {
 export const register: Register = (on, options) => {
   S.terminalBand = !!(options && options.terminalBand)
   S.show = !(options && options.show === false)
-  S.sound = String((options && options.sound) || 'whip config')
-  S.voice = String((options && options.voice) || 'whip config')
 
   on('session.start', async ($, e, next) => {
     await start($)
@@ -210,11 +194,14 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column">
         <Box flexDirection="row">
-          {segs.map(seg => (
-            <Text color={seg.color} bold={seg.bold} dimColor={seg.dim} italic={seg.italic} wrap="truncate-end">
-              {seg.text}
-            </Text>
-          ))}
+          <Box flexDirection="row" flexGrow={1}>
+            {segs.map(seg => (
+              <Text color={seg.color} bold={seg.bold} dimColor={seg.dim} italic={seg.italic} wrap="truncate-end">
+                {seg.text}
+              </Text>
+            ))}
+          </Box>
+          <Button key="hide" label="✕" hotkey="x" role="dismiss" onPress={() => close($)} />
         </Box>
         <Box flexDirection="row" gap={1}>
           <Button key="tap" label="👋 tap" hotkey="t" onPress={() => hit($, 'tap')} />
@@ -222,7 +209,6 @@ export const register: Register = (on, options) => {
           <Button key="wallop" label="💥 WALLOP" hotkey="w" variant="primary" onPress={() => hit($, 'wallop')} />
           <Button key="stats" label="📊 stats" hotkey="g" onPress={() => openStats($)} />
           <Button key="persona" label={`🎭 ${p.name}`} hotkey="p" onPress={() => cyclePersona($)} />
-          <Button key="hide" label="✕" hotkey="x" role="dismiss" onPress={() => close($)} />
         </Box>
       </Box>
     )

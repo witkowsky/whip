@@ -1,9 +1,100 @@
 {
   "name": "whip",
   "displayName": "ClaudeWhip",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Slap your MacBook, whip Claude Code: hooks deliver the whip to Claude, the status line shows it, /slaps keeps score.",
-  "author": { "name": "ClaudeWhip contributors" },
+  "author": {
+    "name": "ClaudeWhip contributors"
+  },
   "license": "MIT",
-  "keywords": ["fun", "statusline", "hooks", "accelerometer", "macos"]
+  "keywords": [
+    "fun",
+    "statusline",
+    "hooks",
+    "accelerometer",
+    "macos"
+  ],
+  "userConfig": {
+    "sound": {
+      "type": "string",
+      "title": "Whip crack sound",
+      "description": "Plays a crack on every hit. 'whip config' keeps what /whip:config chose.",
+      "options": [
+        "whip config",
+        "on",
+        "off"
+      ],
+      "default": "whip config"
+    },
+    "voice": {
+      "type": "string",
+      "title": "Claude yelps out loud",
+      "description": "macOS `say` speaks a line on slaps and WALLOPs.",
+      "options": [
+        "whip config",
+        "on",
+        "off"
+      ],
+      "default": "whip config"
+    },
+    "reaction": {
+      "type": "string",
+      "title": "Claude's emoji reaction in chat",
+      "description": "The one-line in-character flinch (e.g. (°ロ°;) …) Claude opens its next message with.",
+      "options": [
+        "whip config",
+        "on",
+        "off"
+      ],
+      "default": "whip config"
+    },
+    "banner": {
+      "type": "string",
+      "title": "Whip banner in chat",
+      "description": "The 💥 WHIP / WALLOP line Claude Code prints when a whip lands.",
+      "options": [
+        "whip config",
+        "on",
+        "off"
+      ],
+      "default": "whip config"
+    },
+    "personality": {
+      "type": "string",
+      "title": "Personality",
+      "description": "Faces, lines and voice of the whipped Claude.",
+      "options": [
+        "whip config",
+        "classic",
+        "rough",
+        "timid",
+        "kawaii",
+        "butler"
+      ],
+      "default": "whip config"
+    },
+    "hardWhip": {
+      "type": "string",
+      "title": "WALLOP interrupts Claude",
+      "description": "How a WALLOP reaches a busy Claude: typed into tmux, via osascript, or not at all.",
+      "options": [
+        "whip config",
+        "tmux",
+        "osascript",
+        "off"
+      ],
+      "default": "whip config"
+    },
+    "lane": {
+      "type": "string",
+      "title": "Whip lane",
+      "description": "hide = /whip:hide (pause and hide the status line lane and desktop band).",
+      "options": [
+        "whip config",
+        "show",
+        "hide"
+      ],
+      "default": "whip config"
+    }
+  }
 }

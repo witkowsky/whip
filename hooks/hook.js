@@ -47,8 +47,8 @@ function via(event, cfg) {
 function respond(event, input, w, cfg) {
   if (!w) return null;
   const { banner, messageForClaude } = require('../lib/render'); // only needed when a whip lands
-  const sys = banner(w, cfg);
-  if (w.bannerOnly) return { systemMessage: sys };
+  const sys = cfg.banner === false ? undefined : banner(w, cfg); // undefined drops out of the JSON
+  if (w.bannerOnly) return sys ? { systemMessage: sys } : null;
   const idle = event === 'UserPromptSubmit';
   const msg = messageForClaude(w, cfg, { idle });
   switch (event) {
@@ -165,6 +165,12 @@ function main() {
   const input = readInput();
   let res = { out: null };
   try {
+    if (event === 'SessionStart') {
+      try {
+        const changed = require('../lib/config').applyPluginOptions();
+        if (changed.includes('hidden')) store.setPaused(loadConfig().hidden, loadConfig());
+      } catch {}
+    }
     const cfg = loadConfig();
     res = handle(event, input, cfg, t0);
   } catch (err) {

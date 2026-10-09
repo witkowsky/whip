@@ -1,6 +1,6 @@
 {
   "name": "claudewhip",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Slap your MacBook, whip Claude Code. Status line, hooks and slash commands; zero npm dependencies.",
   "license": "MIT",
   "private": true,

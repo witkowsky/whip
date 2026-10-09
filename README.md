@@ -195,6 +195,8 @@ every hook and the status line.
 | `/whip:config [set key value]` | show or change settings |
 | `/whip:off`, `/whip:on` | pause or resume (the sensor keeps running; hits are ignored) |
 | `/whip:hide`, `/whip:show` | close whip (pause and hide the whip lane and the desktop band) / bring it back |
+
+Settings also live in `/plugin` → **whip** → configure (sound, voice, emoji reaction, chat banner, personality, hard whip, lane). They apply at the next session start; the default `whip config` leaves `/whip:config` in charge. `/whip:config` with no arguments opens an interactive menu.
 | `/whip:persona [id]` | list or switch personalities |
 
 Plugin commands are namespaced as `/whip:…`. Typing `/slaps` and pressing
