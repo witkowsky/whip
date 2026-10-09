@@ -1,6 +1,6 @@
 import { expect, test } from 'claude-code/testing'
 
-import { buttonG, customPersona, frame, lane, mood, nextPersonaId, personaOf, toSnap, toastText } from '../hooks/model'
+import { customPersona, frame, lane, mood, nextPersonaId, personaOf, toSnap, toastText } from '../hooks/model'
 import { PERSONAS } from '../hooks/personas'
 
 const T0 = new Date(2026, 9, 8, 16, 0, 0).getTime()
@@ -57,14 +57,6 @@ test('custom personas merge over classic and ignore junk', async () => {
   expect(p.faces.hit[0]).toBe('(╬ಠ益ಠ)')
   expect(p.faces.idle[0]).toBe(PERSONAS.classic!.faces.idle[0])
   expect(p.lines.empty).toBe(PERSONAS.classic!.lines.empty)
-})
-
-test('buttons hit inside your calibrated tiers', async () => {
-  const s = toSnap(null, null, { thresholds: { tapMinG: 0.03, slapG: 0.13, wallopG: 0.35 } }, T0)
-  expect(buttonG(s, 'tap')).toBeLessThan(0.13)
-  expect(buttonG(s, 'slap')).toBeGreaterThan(0.13)
-  expect(buttonG(s, 'slap')).toBeLessThan(0.35)
-  expect(buttonG(s, 'wallop')).toBeGreaterThan(0.35)
 })
 
 test('garbage files never break the digest', async () => {

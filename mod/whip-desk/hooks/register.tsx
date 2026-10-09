@@ -1,12 +1,12 @@
 // ClaudeWhip for Claude Desktop (and the terminal, if you ask): the whip lane as
-// a band above the prompt, a toast when a whip lands, slap buttons and a stats
-// pane. It reads the same ~/.claude/whip files the status line does and runs
+// a band above the prompt, a toast when a whip lands and a stats pane
+// (/whip:slaps). It reads the same ~/.claude/whip files the status line does and runs
 // the `whip` CLI for anything that changes state, so the engine stays one.
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
 
-import type { WhipPersona, WhipSnap, WhipTier } from '../types'
-import { RECOVER_MS, buttonG, customPersona, lane, nextPersonaId, personaOf, sanitizeId, toSnap, toastText } from './model'
+import type { WhipPersona, WhipSnap } from '../types'
+import { RECOVER_MS, customPersona, lane, nextPersonaId, personaOf, sanitizeId, toSnap, toastText } from './model'
 
 const snapA = atom({ plugin: 'whip-desk', key: 'snap' } as const, null)
 const nowA = atom({ plugin: 'whip-desk', key: 'now' } as const, 0)
@@ -124,12 +124,6 @@ async function whip($: $T, args: string[]): Promise<string | null> {
   return r.exitCode === 0 ? r.stdout : null
 }
 
-async function hit($: $T, tier: WhipTier): Promise<void> {
-  const s = S.snap || toSnap(null, null, null, await $.clock.now())
-  await whip($, ['simulate', '--g', String(buttonG(s, tier)), '--tier', tier, '--session', S.sid])
-  await poll($, true)
-}
-
 async function openStats($: $T): Promise<void> {
   const out = await whip($, ['stats', '--plain'])
   if (out !== null) await update($, statsA, () => out.trimEnd())
@@ -156,7 +150,6 @@ async function close($: $T): Promise<void> {
   if ((await whip($, ['hide'])) !== null) $.ui.toast('ClaudeWhip closed. /whip:show brings it back.', { timeoutMs: 3000 })
   await poll($, true)
 }
-
 
 async function start($: $T): Promise<void> {
   S.home = await findHome($)
@@ -198,26 +191,20 @@ export const register: Register = (on, options) => {
     const p = personaOf(s, await read($, customsA))
     const segs = lane(s, now, p)
     const { Box, Text, Button } = $.ui.resolve(e)
+    // Its own framed card: the band is one shared slot, so another plugin's bar
+    // (Rizk's, say) draws in the same panel; the border keeps the two apart.
     return (
-      <Box flexDirection="column">
-        <Box flexDirection="row">
-          <Box flexDirection="row" flexGrow={1}>
-            {segs.map(seg => (
-              <Text color={seg.color} bold={seg.bold} dimColor={seg.dim} italic={seg.italic} wrap="truncate-end">
-                {seg.text}
-              </Text>
-            ))}
-          </Box>
-          <Button key="hide" label="✕" hotkey="x" role="dismiss" onPress={() => close($)} />
+      <Box flexDirection="row" gap={1} borderStyle="round" borderDimColor paddingX={1}>
+        <Box flexDirection="row" flexGrow={1}>
+          {segs.map(seg => (
+            <Text color={seg.color} bold={seg.bold} dimColor={seg.dim} italic={seg.italic} wrap="truncate-end">
+              {seg.text}
+            </Text>
+          ))}
         </Box>
-        <Box flexDirection="row" gap={1}>
-          <Button key="tap" label="👋 tap" hotkey="t" onPress={() => hit($, 'tap')} />
-          <Button key="slap" label="✋ slap" hotkey="s" onPress={() => hit($, 'slap')} />
-          <Button key="wallop" label="💥 WALLOP" hotkey="w" variant="primary" onPress={() => hit($, 'wallop')} />
-          <Button key="stats" label="📊 stats" hotkey="g" onPress={() => openStats($)} />
-          <Button key="persona" label={`🎭 ${p.name}`} hotkey="p" onPress={() => cyclePersona($)} />
-          <Button key="mute" label={s.muted ? '🔇 muted' : '🔊'} hotkey="m" onPress={() => toggleMute($)} />
-        </Box>
+        <Button key="persona" label={`🎭 ${p.name}`} hotkey="p" onPress={() => cyclePersona($)} />
+        <Button key="mute" label={s.muted ? '🔇' : '🔊'} hotkey="m" onPress={() => toggleMute($)} />
+        <Button key="hide" label="✕" role="dismiss" onPress={() => close($)} />
       </Box>
     )
   })
@@ -227,7 +214,7 @@ export const register: Register = (on, options) => {
     const text = await read($, statsA)
     return (
       <Box flexDirection="column">
-        <Code source={text || 'No stats yet. Slap your MacBook (or press ✋ slap).'} language="text" />
+        <Code source={text || 'No stats yet. Slap your MacBook.'} language="text" />
         <Box flexDirection="row" gap={1}>
           <Button key="refresh" label="refresh" hotkey="r" onPress={() => openStats($)} />
           <Button key="close" label="close" role="dismiss" onPress={() => $.ui.close({ id: PANE })} />

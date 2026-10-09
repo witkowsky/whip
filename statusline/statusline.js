@@ -51,6 +51,19 @@ function runWrapped(cmd, raw) {
   return (r.stdout || '').replace(/\n+$/, '');
 }
 
+// True when the whip-desk mod draws its band in the terminal (enabled, show on,
+// terminalBand on): the band is the lane then, so we don't print it twice.
+function bandInTerminal(settingsPath) {
+  try {
+    const s = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    const id = Object.keys(s.enabledPlugins || {}).find(k => k.startsWith('whip-desk@') && s.enabledPlugins[k]);
+    const o = id && s.pluginConfigs && s.pluginConfigs[id] && s.pluginConfigs[id].options;
+    return !!(o && o.terminalBand && o.show !== false);
+  } catch {
+    return false;
+  }
+}
+
 function main() {
   const now = Date.now();
   const raw = readStdin();
@@ -86,7 +99,7 @@ function main() {
     top = infoLine(input, dir ? gitBranch(dir) : null, p, cfg.ascii);
   }
 
-  if (cfg.hidden) process.stdout.write(top);
+  if (cfg.hidden || bandInTerminal(paths().settings)) process.stdout.write(top);
   else if (cfg.statusLines === 1 || !top) process.stdout.write(top ? `${top} ${p.muted('│')} ${lane}` : lane);
   else process.stdout.write(`${top}\n${lane}`);
 }

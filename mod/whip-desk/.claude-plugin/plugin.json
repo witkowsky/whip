@@ -1,7 +1,7 @@
 {
   "name": "whip-desk",
   "version": "0.3.1",
-  "description": "ClaudeWhip for Claude Desktop: the whip lane as a band above the prompt, hit toasts, slap buttons and a stats pane",
+  "description": "ClaudeWhip for Claude Desktop: the whip lane as a band above the prompt, hit toasts and a stats pane",
   "types": "./types/index.d.ts",
   "userConfig": {
     "show": {
@@ -13,7 +13,7 @@
     "terminalBand": {
       "type": "boolean",
       "title": "Also draw the band in the terminal",
-      "description": "Off by default: the terminal already shows the whip lane in its status line.",
+      "description": "Off by default. On: the band replaces the whip lane in the terminal status line.",
       "default": false
     }
   },

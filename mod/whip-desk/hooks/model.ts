@@ -201,12 +201,6 @@ export function lane(snap: WhipSnap, now: number, p: WhipPersona): Seg[] {
   }
 }
 
-/** Force values for the buttons, inside the user's own calibrated tiers. */
-export function buttonG(snap: WhipSnap, tier: WhipTier): number {
-  const g = tier === 'tap' ? (snap.tapMinG + snap.slapG) / 2 : tier === 'slap' ? (snap.slapG + snap.wallopG) / 2 : snap.wallopG * 1.25
-  return Math.round(g * 100) / 100
-}
-
 export function toastText(hit: WhipHit, p: WhipPersona, ascii: boolean): string {
   const wallop = hit.tier === 'wallop'
   const fc = face(p, hit.combo >= 5 ? 'wrecked' : hit.combo >= 3 || wallop ? 'stunned' : 'hit', ascii)
