@@ -93,7 +93,7 @@ function handle(event, input, cfg, now = Date.now()) {
       w = t({
         patch: { busy: true, tool: undefined, ...pick(sessionInfo(input), ['tmuxPane', 'tmuxSocket', 'termProgram', 'cwd']) },
         via: via(event, cfg),
-        // Slash commands (/slaps, /whip-config...) never carry a whip; the
+        // Slash commands (/slaps, /whip:config...) never carry a whip; the
         // banner-only marker left by /whip itself is the exception.
         canTake: (s) => !isSlashCommand(input.prompt) || !!s.pending.bannerOnly,
       });

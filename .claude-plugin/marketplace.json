@@ -16,7 +16,7 @@
       "name": "whip-desk",
       "source": "./mod/whip-desk",
       "description": "ClaudeWhip for Claude Desktop: whip band above the prompt, hit toasts, slap buttons, stats pane (Claude Code 2.1.286+ desktop / 2.1.287+ terminal)",
-      "version": "0.1.0",
+      "version": "0.2.0",
       "category": "fun"
     }
   ]

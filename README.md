@@ -71,7 +71,7 @@ line, wrapped). Line 2 is the whip lane:
 | recovering | `(；￣▽￣)` | 2–20 s after a hit; rotating apology (`"ok ok, hurrying…"`) |
 | sweating | `(°△°;)` | ≥ 5 slaps in 10 min |
 | good behaviour | `(ᵔᴥᵔ)` | no slaps for 1 h+ |
-| paused | `(－ω－)` | `/whip-off` |
+| paused | `(－ω－)` | `/whip:off` |
 
 The whip frame is picked from the milliseconds since the hit, so each
 re-render shows a later frame. Every frame also reads on its own, because
@@ -96,7 +96,7 @@ leaderboard.
 
 ### Personalities
 
-`whip persona` lists them and `whip persona rough` (or `/whip-persona rough`)
+`whip persona` lists them and `whip persona rough` (or `/whip:persona rough`)
 switches. Each one has its own faces, status-line lines, banner word, voice and
 spoken yelps, and the one-line in-character reaction Claude opens with. **What
 Claude is asked to do never changes**, so a personality never makes the whip
@@ -135,7 +135,7 @@ as a **band above the prompt**, with these buttons:
 
 - **👋 tap**, **✋ slap** and **💥 WALLOP** send a hit at forces inside your
   calibrated tiers.
-- **📊 stats** opens a native stats pane (also `/whip-stats`), with no model
+- **📊 stats** opens a native stats pane (also `/whip:slaps`), with no model
   turn.
 - **🎭** cycles through the personalities.
 
@@ -160,8 +160,8 @@ emits {"ts","g","tier"}         /var/run/claudewhip/            │ writes ~/.cl
                                                                 ▼ state.json · sessions/<id>.json
                      ┌───────────────────────┬──────────────────┼────────────────────────┐
                      ▼                       ▼                  ▼                        ▼
-             PreToolUse/PostToolUse      Stop hook        statusline.js         /whip /slaps /whip-config
-             additionalContext +         continues the    face · whip lane      /whip-on /whip-off
+             PreToolUse/PostToolUse      Stop hook        statusline.js         /whip /slaps /whip:config
+             additionalContext +         continues the    face · whip lane      /whip:on /whip:off
              transcript banner           turn once        counters (≈27 ms)
                      WALLOP + tmux: Esc → typed message → Enter (a real interrupt)
 ```
@@ -192,9 +192,10 @@ every hook and the status line.
 |---|---|
 | `/whip [message]` (`/whip:whip`) | manual whip with your own words |
 | `/slaps` | the stats screen |
-| `/whip-config [set key value]` | show or change settings |
-| `/whip-off`, `/whip-on` | pause or resume (the sensor keeps running; hits are ignored) |
-| `/whip-persona [id]` | list or switch personalities |
+| `/whip:config [set key value]` | show or change settings |
+| `/whip:off`, `/whip:on` | pause or resume (the sensor keeps running; hits are ignored) |
+| `/whip:hide`, `/whip:show` | close whip (pause and hide the whip lane and the desktop band) / bring it back |
+| `/whip:persona [id]` | list or switch personalities |
 
 Plugin commands are namespaced as `/whip:…`. Typing `/slaps` and pressing
 Enter autocompletes to it.

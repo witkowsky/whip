@@ -54,6 +54,7 @@ export function toSnap(st: any, se: any, cf: any, now: number): WhipSnap {
     tool: se && se.tool && typeof se.tool.name === 'string' ? { name: se.tool.name, since: num(se.tool.since, 0) } : null,
     personality: cf && typeof cf.personality === 'string' ? cf.personality : 'classic',
     ascii: !!(cf && cf.ascii),
+    hidden: !!(cf && cf.hidden),
     tapMinG: num(t.tapMinG, 0.05),
     slapG: num(t.slapG, 0.45),
     wallopG: num(t.wallopG, 0.9),
@@ -174,7 +175,7 @@ export function lane(snap: WhipSnap, now: number, p: WhipPersona): Seg[] {
   if (snap.total === 0 && !lh) return [...segs, { text: p.lines.empty, color: 'subtle' }]
   switch (m) {
     case 'paused':
-      return [...segs, { text: 'whip paused · /whip-on to resume', color: 'subtle' }]
+      return [...segs, { text: 'whip paused · /whip:on to resume', color: 'subtle' }]
     case 'tap':
       return [...segs, { text: ascii ? '*tap* ' : '👋 tap! ', color: 'success' }, { text: `${lh!.line || ''}  ${fmtG(lh!.g)} `, color: 'subtle' }, ...forceBar(lh!.g, snap, ascii)]
     case 'hit':

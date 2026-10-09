@@ -88,7 +88,7 @@ Docs: <https://code.claude.com/docs/en/plugins/manifest-reference>,
   and leaves empty `enabledPlugins` / `extraKnownMarketplaces` objects in
   settings.json. `uninstall.sh` cleans up both. *Verified in a sandboxed HOME.*
 - **Commands are namespaced** `/<plugin>:<file>`, so ours are `/whip:whip`,
-  `/whip:slaps`, `/whip:whip-config`, `/whip:whip-on`, `/whip:whip-off`.
+  `/whip:slaps`, `/whip:config`, `/whip:on`, `/whip:off`, `/whip:persona`, `/whip:hide`, `/whip:show`.
   Typing `/slaps` + Enter autocompletes to `/whip:slaps`. *Verified.*
 - **Command bodies** support `` !`cmd` `` bash injection, `$ARGUMENTS`,
   `${CLAUDE_PLUGIN_ROOT}` and `${CLAUDE_SESSION_ID}`. Frontmatter `allowed-tools`

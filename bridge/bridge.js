@@ -29,7 +29,7 @@ function parseEvent(line, now) {
 }
 
 function onEvent(ev) {
-  const cfg = loadConfig(); // re-read every time: /whip-config edits apply instantly
+  const cfg = loadConfig(); // re-read every time: /whip:config edits apply instantly
   const r = deliver({ g: ev.g, source: 'sensor' }, cfg, { now: ev.ts });
   if (!r.result.accepted) return log(`ignored ${ev.g.toFixed(2)}g (${r.result.reason})`);
   const hard = (r.hard || []).map((h) => (h.ok ? `hard:${h.via}` : `hard-skip:${h.why}`)).join(' ');

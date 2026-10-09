@@ -98,7 +98,7 @@ if printf '%s' "$PLUGINS" | grep -q 'whip@claudewhip'; then
 else
   claude plugin install whip@claudewhip --scope user >/dev/null
 fi
-info "whip@claudewhip installed: /whip, /slaps, /whip-config, /whip-on, /whip-off"
+info "whip@claudewhip installed: /whip, /slaps, /whip:config, /whip:on, /whip:off"
 
 # ---------------------------------------------------------------- status line
 step "Wiring the status line into $CLAUDE_DIR/settings.json"

@@ -12,8 +12,6 @@ const snapA = atom({ plugin: 'whip-desk', key: 'snap' } as const, null)
 const nowA = atom({ plugin: 'whip-desk', key: 'now' } as const, 0)
 const statsA = atom({ plugin: 'whip-desk', key: 'stats' } as const, '')
 const customsA = atom({ plugin: 'whip-desk', key: 'customs' } as const, {})
-// The ✕ on the band; kept in $.store too so it survives new sessions.
-const hiddenA = atom({ plugin: 'whip-desk', key: 'hidden' } as const, false)
 
 const PANE = 'whip-stats'
 const POLL_MS = 200
@@ -35,8 +33,6 @@ const S = {
   sound: 'whip config',
   voice: 'whip config',
 }
-
-const HIDDEN_KEY = 'hidden'
 
 async function readJson($: $T, path: string): Promise<any> {
   try {
@@ -104,7 +100,7 @@ async function poll($: $T, force = false): Promise<void> {
     const [st, se, cf] = await Promise.all(files.map(f => readJson($, f)))
     const next = toSnap(st, se, cf, now)
     const lh = next.lastHit
-    if (lh && S.shownHit && lh.id !== S.shownHit && lh.tier !== 'tap' && now - lh.ts < 4000 && S.show && !(await read($, hiddenA))) {
+    if (lh && S.shownHit && lh.id !== S.shownHit && lh.tier !== 'tap' && now - lh.ts < 4000 && !next.hidden && S.show) {
       $.ui.toast(toastText(lh, personaOf(next, S.customs), next.ascii), { timeoutMs: 3000 })
     }
     S.shownHit = lh ? lh.id : S.shownHit || 'none'
@@ -150,10 +146,10 @@ async function cyclePersona($: $T): Promise<void> {
   await poll($, true)
 }
 
-async function setHidden($: $T, hidden: boolean): Promise<void> {
-  await $.store.set(HIDDEN_KEY, hidden)
-  await update($, hiddenA, () => hidden)
-  if (hidden) $.ui.toast('ClaudeWhip hidden. /whip-desk-show brings it back.', { timeoutMs: 3000 })
+// The ✕ on the band: the same as /whip:hide (pause, hide the lane everywhere).
+async function close($: $T): Promise<void> {
+  if ((await whip($, ['hide'])) !== null) $.ui.toast('ClaudeWhip closed. /whip:show brings it back.', { timeoutMs: 3000 })
+  await poll($, true)
 }
 
 // The plugin settings' on/off pickers write through to ~/.claude/whip/config.json,
@@ -171,16 +167,11 @@ async function applySettings($: $T): Promise<void> {
 async function start($: $T): Promise<void> {
   S.home = await findHome($)
   S.sid = await $.session.id()
-  await update($, hiddenA, () => false)
-  if ((await $.store.get(HIDDEN_KEY)) === true) await update($, hiddenA, () => true)
   await applySettings($)
   await loadCustoms($)
   await poll($, true)
   $.clock.every(POLL_MS, () => poll($))
   $.clock.every(10000, () => loadCustoms($))
-  await $.command.register({ name: 'whip-stats', description: 'ClaudeWhip: slap stats in a pane (no model turn)' })
-  await $.command.register({ name: 'whip-desk-show', description: 'ClaudeWhip: show the whip band again after ✕' })
-  await $.command.register({ name: 'whip-desk-hide', description: 'ClaudeWhip: hide the whip band and toasts' })
 }
 
 export const register: Register = (on, options) => {
@@ -194,27 +185,24 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
-  on('command.run', { command: 'whip-stats' }, async $ => {
+  // /whip:slaps (the whip plugin's command) opens the stats pane instead of a model turn.
+  on('command.run', { command: 'whip:slaps' }, async $ => {
     await openStats($)
     return { text: 'Opened the ClaudeWhip stats pane.' }
   })
 
-  on('command.run', { command: 'whip-desk-show' }, async $ => {
-    await setHidden($, false)
-    return { text: S.show ? 'ClaudeWhip band is back.' : 'Unhidden, but "Show the whip band and toasts" is off in the plugin settings.' }
-  })
-
-  on('command.run', { command: 'whip-desk-hide' }, async $ => {
-    await setHidden($, true)
-    return { text: 'ClaudeWhip band hidden. /whip-desk-show brings it back.' }
+  // /whip:hide and /whip:show already hide the band through config.json; refresh at once.
+  on('command.run', { command: ['whip:hide', 'whip:show'] }, async ($, e, next) => {
+    const r = await next(e)
+    await poll($, true)
+    return r
   })
 
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey || !S.show) return next(e)
-    if (await read($, hiddenA)) return next(e)
     if (e.surface === 'terminal' && !S.terminalBand) return next(e) // the status line has it
     const s = await read($, snapA)
-    if (!s) return next(e)
+    if (!s || s.hidden) return next(e)
     const now = Math.max(await read($, nowA), s.lastHit ? s.lastHit.ts : 0)
     const p = personaOf(s, await read($, customsA))
     const segs = lane(s, now, p)
@@ -234,7 +222,7 @@ export const register: Register = (on, options) => {
           <Button key="wallop" label="💥 WALLOP" hotkey="w" variant="primary" onPress={() => hit($, 'wallop')} />
           <Button key="stats" label="📊 stats" hotkey="g" onPress={() => openStats($)} />
           <Button key="persona" label={`🎭 ${p.name}`} hotkey="p" onPress={() => cyclePersona($)} />
-          <Button key="hide" label="✕" hotkey="x" role="dismiss" onPress={() => setHidden($, true)} />
+          <Button key="hide" label="✕" hotkey="x" role="dismiss" onPress={() => close($)} />
         </Box>
       </Box>
     )

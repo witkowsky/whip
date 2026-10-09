@@ -86,7 +86,8 @@ function main() {
     top = infoLine(input, dir ? gitBranch(dir) : null, p, cfg.ascii);
   }
 
-  if (cfg.statusLines === 1 || !top) process.stdout.write(top ? `${top} ${p.muted('│')} ${lane}` : lane);
+  if (cfg.hidden) process.stdout.write(top);
+  else if (cfg.statusLines === 1 || !top) process.stdout.write(top ? `${top} ${p.muted('│')} ${lane}` : lane);
   else process.stdout.write(`${top}\n${lane}`);
 }
 

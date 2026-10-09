@@ -292,9 +292,9 @@ test('stdin "null", arrays and numbers never crash the hook', () => {
   for (const raw of ['null', '[]', '42', '"str"']) assert.equal(hook('PreToolUse', raw).out, null, raw);
 });
 
-test('/whip-persona runs exactly as the slash command writes it, and really switches', () => {
+test('/whip:persona runs exactly as the slash command writes it, and really switches', () => {
   tmpHome();
-  const md = fs.readFileSync(path.join(ROOT, 'commands/whip-persona.md'), 'utf8');
+  const md = fs.readFileSync(path.join(ROOT, 'commands/persona.md'), 'utf8');
   const line = /!`(.+)`/.exec(md)[1].replace('${CLAUDE_PLUGIN_ROOT}', ROOT).replace('$ARGUMENTS', 'kawaii');
   const r = spawnSync('/bin/sh', ['-c', line], { encoding: 'utf8', env: process.env });
   assert.equal(r.status, 0, r.stderr);

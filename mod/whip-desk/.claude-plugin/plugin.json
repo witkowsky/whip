@@ -7,7 +7,7 @@
     "show": {
       "type": "boolean",
       "title": "Show the whip band and toasts",
-      "description": "Off hides ClaudeWhip in this app completely. The ✕ on the band hides it too; /whip-desk-show brings it back.",
+      "description": "Off hides ClaudeWhip in this app completely. Only this app; /whip:hide (or ✕ on the band) closes whip everywhere, /whip:show brings it back.",
       "default": true
     },
     "sound": {

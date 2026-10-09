@@ -23,6 +23,8 @@ export type WhipSnap = {
   tool: { name: string; since: number } | null
   personality: string
   ascii: boolean
+  /** `whip hide` in config.json */
+  hidden: boolean
   tapMinG: number
   slapG: number
   wallopG: number
@@ -47,7 +49,6 @@ declare module 'claude-code' {
       now: number
       stats: string
       customs: Record<string, WhipPersona>
-      hidden: boolean
     }
   }
 }

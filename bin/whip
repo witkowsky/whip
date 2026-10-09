@@ -201,6 +201,18 @@ const commands = {
     console.log('whip is OFF — the sensor keeps running, hits are ignored (/whip still works)');
   },
 
+  // Close: pause hits and take the whip lane out of the status line (and the desktop band).
+  hide() {
+    store.setPaused(true, config.loadConfig());
+    config.saveUserConfig({ hidden: true });
+    console.log('whip is HIDDEN and paused — the status line shows only line 1 (/whip:show brings it back)');
+  },
+  show() {
+    config.saveUserConfig({ hidden: false });
+    store.setPaused(false, config.loadConfig());
+    console.log('whip is SHOWN and ON — the whip lane is back and slaps reach Claude again');
+  },
+
   sessions(args) {
     const cfg = config.loadConfig();
     const p = paint(args, cfg);
@@ -338,6 +350,7 @@ const commands = {
   whip config [show|get|set|unset|path|edit] ...
   whip persona [id] [--preview]            personalities: classic, rough, timid, kawaii, butler, yours
   whip on | off                            resume / pause (sensor keeps running)
+  whip hide | show                         close whip (pause + hide the lane) / bring it back
   whip sessions                            known Claude Code sessions (→ = target)
   whip doctor                      check sensor, socket, hooks, status line, tmux
   whip calibrate                           tap / slap / WALLOP wizard (needs the sensor)
