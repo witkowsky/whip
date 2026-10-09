@@ -1,6 +1,6 @@
 // ClaudeWhip for Claude Desktop (and the terminal, if you ask): the whip lane as
 // a band above the prompt, a toast when a whip lands and a stats pane
-// (/whip:slaps). It reads the same ~/.claude/whip files the status line does and runs
+// (/whip:stats, /whip:slaps). It reads the same ~/.claude/whip files the status line does and runs
 // the `whip` CLI for anything that changes state, so the engine stays one.
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register } from 'claude-code'
@@ -169,8 +169,8 @@ export const register: Register = (on, options) => {
     return next(e)
   })
 
-  // /whip:slaps (the whip plugin's command) opens the stats pane instead of a model turn.
-  on('command.run', { command: 'whip:slaps' }, async $ => {
+  // /whip:slaps and /whip:stats (the whip plugin's commands) open the stats pane instead of a model turn.
+  on('command.run', { command: ['whip:slaps', 'whip:stats'] }, async $ => {
     await openStats($)
     return { text: 'Opened the ClaudeWhip stats pane.' }
   })

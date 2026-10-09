@@ -1,7 +1,8 @@
 {
   "name": "whip-desk",
+  "displayName": "ClaudeWhip Desktop",
   "version": "0.3.1",
-  "description": "ClaudeWhip for Claude Desktop: the whip lane as a band above the prompt, hit toasts and a stats pane",
+  "description": "ClaudeWhip for Claude Desktop: the whip lane as a band above the prompt, hit toasts and a stats pane. Install alongside the ClaudeWhip plugin, which delivers the whips.",
   "types": "./types/index.d.ts",
   "userConfig": {
     "show": {

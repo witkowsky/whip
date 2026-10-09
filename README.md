@@ -45,6 +45,8 @@ The installer:
 
 1. Backs up `~/.claude/settings.json` byte for byte.
 2. Installs the plugin: `claude plugin marketplace add <repo>`, then `claude plugin install whip@claudewhip`.
+   On Claude Desktop, add the band too: `claude plugin install whip-desk@claudewhip`
+   (see [Claude Desktop](#claude-desktop-claudewhip-desktop)).
 3. Merges the `statusLine` into your settings. If you already have one, it
    **wraps** yours: your output becomes line 1 and the whip lane goes
    underneath. `--mode replace` and `--mode keep` are also available.
@@ -147,23 +149,33 @@ Colours are ANSI 256 with a separate light palette (it follows Claude Code's
 `theme` setting, or `COLORFGBG`). `NO_COLOR` turns them off, and
 `whip config set ascii true` replaces every emoji and wide character.
 
-## Claude Desktop (mod)
+## Claude Desktop (ClaudeWhip Desktop)
 
 Claude Desktop's Code tab doesn't run the `statusLine` script, so it gets a
-**mod** instead: `mod/whip-desk`, a function-hook plugin for Claude Code
-2.1.286+ on desktop and 2.1.287+ in the terminal. It draws the same whip lane
-as a **band above the prompt**, with these buttons:
+**mod** instead: **ClaudeWhip Desktop** (`whip-desk`, in `mod/whip-desk`), a
+function-hook plugin for Claude Code 2.1.286+ on desktop and 2.1.287+ in the
+terminal. It draws the same whip lane as a **band above the prompt**:
+
+![ClaudeWhip Desktop band](docs/media/desk-band.png)
 
 - **🎭** cycles through the personalities.
 - **🔊 / 🔇** mutes and unmutes the crack and the voice (same as `/whip:mute`).
 - **✕** hides whip everywhere (same as `/whip:hide`).
 
-`/whip:slaps` opens a native stats pane, with no model turn.
+`/whip:stats` (or `/whip:slaps`) opens a native stats pane, with no model turn
+and no button taking up room on the band.
 
 Every whip that lands shows a **toast**. The mod only reads `~/.claude/whip`
 and runs `bin/whip`, so the hooks, bridge and sensor stay the one engine.
 
+**On Desktop you want both plugins.** `whip` (ClaudeWhip) does the whipping:
+the hooks that tell Claude, the slash commands, sound and voice. `whip-desk`
+(ClaudeWhip Desktop) only draws it. Without `whip` the band moves but Claude
+never hears about it; without `whip-desk` Claude gets whipped but Desktop
+shows nothing.
+
 ```bash
+claude plugin install whip@claudewhip        # ./install.sh does this one for you
 claude plugin install whip-desk@claudewhip
 ```
 
@@ -213,14 +225,14 @@ every hook and the status line.
 | inside Claude Code | |
 |---|---|
 | `/whip [message]` (`/whip:whip`) | manual whip with your own words |
-| `/slaps` | the stats screen |
+| `/whip:stats` or `/slaps` (`/whip:slaps`) | the stats screen (a native pane on Desktop) |
 | `/whip:config [set key value]` | show or change settings |
 | `/whip:off`, `/whip:on` | pause or resume (the sensor keeps running; hits are ignored) |
 | `/whip:hide`, `/whip:show` | close whip (pause and hide the whip lane and the desktop band) / bring it back |
 | `/whip:mute`, `/whip:unmute` | silence the crack and the voice without changing the `sound` / `voice` settings / bring them back |
+| `/whip:persona [id]` | list or switch personalities |
 
 Settings also live in `/plugin` → **whip** → configure (sound, voice, emoji reaction, chat banner, personality, hard whip, lane). They apply at the next session start; the default `whip config` leaves `/whip:config` in charge. `/whip:config` with no arguments opens an interactive menu.
-| `/whip:persona [id]` | list or switch personalities |
 
 Plugin commands are namespaced as `/whip:…`. Typing `/slaps` and pressing
 Enter autocompletes to it.

@@ -12,3 +12,4 @@ Enter
 Show
 Sleep 6.3s
 Screenshot docs/media/ascii.png
+Sleep 300ms
