@@ -25,6 +25,8 @@ export type WhipSnap = {
   ascii: boolean
   /** `whip hide` in config.json */
   hidden: boolean
+  /** `whip mute` in config.json */
+  muted: boolean
   tapMinG: number
   slapG: number
   wallopG: number

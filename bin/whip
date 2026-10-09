@@ -213,6 +213,18 @@ const commands = {
     console.log('whip is SHOWN and ON — the whip lane is back and slaps reach Claude again');
   },
 
+  // Silence sound and voice without touching either setting.
+  mute() {
+    config.saveUserConfig({ muted: true });
+    console.log('whip is MUTED — no crack, no voice (/whip:unmute brings them back)');
+  },
+  unmute() {
+    config.saveUserConfig({ muted: false });
+    const cfg = config.loadConfig();
+    const on = [cfg.sound && 'sound', cfg.voice && 'voice'].filter(Boolean);
+    console.log(`whip is UNMUTED — ${on.length ? on.join(' and ') + ' on' : 'sound and voice are both off; turn them on with whip config set sound on'}`);
+  },
+
   sessions(args) {
     const cfg = config.loadConfig();
     const p = paint(args, cfg);
@@ -351,6 +363,7 @@ const commands = {
   whip persona [id] [--preview]            personalities: classic, rough, timid, kawaii, butler, yours
   whip on | off                            resume / pause (sensor keeps running)
   whip hide | show                         close whip (pause + hide the lane) / bring it back
+  whip mute | unmute                       silence sound and voice / bring them back
   whip sessions                            known Claude Code sessions (→ = target)
   whip doctor                      check sensor, socket, hooks, status line, tmux
   whip calibrate                           tap / slap / WALLOP wizard (needs the sensor)

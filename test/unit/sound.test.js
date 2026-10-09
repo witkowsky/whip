@@ -122,3 +122,10 @@ test('custom sounds: whip config set sounds.slap stores a path; "sounds on" stil
   assert.deepEqual(config.parseSetting('sounds', 'on'), { sound: true });
   assert.throws(() => config.parseSetting('sounds.boing', 'x'), /unknown setting/);
 });
+
+test('muted silences sound and voice without changing either setting', () => {
+  tmpHome();
+  assert.equal(sound.play('slap', cfg({ sound: true, muted: true })), false);
+  assert.equal(sound.speak(' ', cfg({ voice: true, muted: true })), false);
+  assert.deepEqual(config.parseSetting('muted', 'on'), { muted: true });
+});

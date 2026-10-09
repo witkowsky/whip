@@ -1,7 +1,7 @@
 {
   "name": "whip",
   "displayName": "ClaudeWhip",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Slap your MacBook, whip Claude Code: hooks deliver the whip to Claude, the status line shows it, /slaps keeps score.",
   "author": {
     "name": "ClaudeWhip contributors"

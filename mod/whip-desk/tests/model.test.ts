@@ -73,3 +73,8 @@ test('garbage files never break the digest', async () => {
   expect(s.lastHit).toBe(null)
   expect(text(lane(s, T0, PERSONAS.classic!))).toContain('no slaps yet')
 })
+
+test('muted comes from config.json', async () => {
+  expect(toSnap(null, null, { muted: true }, T0).muted).toBe(true)
+  expect(toSnap(null, null, {}, T0).muted).toBe(false)
+})

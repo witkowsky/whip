@@ -144,6 +144,13 @@ async function cyclePersona($: $T): Promise<void> {
   await poll($, true)
 }
 
+async function toggleMute($: $T): Promise<void> {
+  if (!S.snap) return
+  const out = await whip($, [S.snap.muted ? 'unmute' : 'mute'])
+  if (out !== null) $.ui.toast((out.split('\n')[0] ?? '').replace(/ — .*/, ''), { timeoutMs: 2000 })
+  await poll($, true)
+}
+
 // The ✕ on the band: the same as /whip:hide (pause, hide the lane everywhere).
 async function close($: $T): Promise<void> {
   if ((await whip($, ['hide'])) !== null) $.ui.toast('ClaudeWhip closed. /whip:show brings it back.', { timeoutMs: 3000 })
@@ -209,6 +216,7 @@ export const register: Register = (on, options) => {
           <Button key="wallop" label="💥 WALLOP" hotkey="w" variant="primary" onPress={() => hit($, 'wallop')} />
           <Button key="stats" label="📊 stats" hotkey="g" onPress={() => openStats($)} />
           <Button key="persona" label={`🎭 ${p.name}`} hotkey="p" onPress={() => cyclePersona($)} />
+          <Button key="mute" label={s.muted ? '🔇 muted' : '🔊'} hotkey="m" onPress={() => toggleMute($)} />
         </Box>
       </Box>
     )

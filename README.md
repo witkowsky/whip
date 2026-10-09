@@ -73,6 +73,9 @@ line, wrapped). Line 2 is the whip lane:
 | good behaviour | `(ᵔᴥᵔ)` | no slaps for 1 h+ |
 | paused | `(－ω－)` | `/whip:off` |
 
+The lane ends with the personality on duty (`· 🎭 Pip`) and a 🔇 while
+`/whip:mute` is on.
+
 The whip frame is picked from the milliseconds since the hit, so each
 re-render shows a later frame. Every frame also reads on its own, because
 Claude Code can skip frames. The force bar is scaled to your tier thresholds:
@@ -156,6 +159,7 @@ as a **band above the prompt**, with these buttons:
 - **📊 stats** opens a native stats pane (also `/whip:slaps`), with no model
   turn.
 - **🎭** cycles through the personalities.
+- **🔊 / 🔇** mutes and unmutes the crack and the voice (same as `/whip:mute`).
 
 Every whip that lands shows a **toast**. The mod only reads `~/.claude/whip`
 and runs `bin/whip`, so the hooks, bridge and sensor stay the one engine.
@@ -213,6 +217,7 @@ every hook and the status line.
 | `/whip:config [set key value]` | show or change settings |
 | `/whip:off`, `/whip:on` | pause or resume (the sensor keeps running; hits are ignored) |
 | `/whip:hide`, `/whip:show` | close whip (pause and hide the whip lane and the desktop band) / bring it back |
+| `/whip:mute`, `/whip:unmute` | silence the crack and the voice without changing the `sound` / `voice` settings / bring them back |
 
 Settings also live in `/plugin` → **whip** → configure (sound, voice, emoji reaction, chat banner, personality, hard whip, lane). They apply at the next session start; the default `whip config` leaves `/whip:config` in charge. `/whip:config` with no arguments opens an interactive menu.
 | `/whip:persona [id]` | list or switch personalities |

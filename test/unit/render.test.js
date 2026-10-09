@@ -154,3 +154,14 @@ test('status line script: renders two lines and stays under the 50 ms budget', (
   assert.ok(median < budget, `median ${median.toFixed(1)} ms (budget ${budget})`);
   fs.rmSync(dir, { recursive: true, force: true });
 });
+
+test('the lane names the personality on duty and shows when it is muted', () => {
+  const personas = require('../../lib/personas');
+  const s = stateWith([{ ts: T0, g: 0.6 }]);
+  const c = cfg();
+  Object.defineProperty(c, 'persona', { value: personas.get('timid'), enumerable: false });
+  const lane = render.whipLane(s, null, c, plain, T0 + 600000 + 1);
+  assert.match(lane, /· 🎭 Pip$/);
+  assert.match(render.whipLane(s, null, Object.assign(c, { muted: true }), plain, T0 + 600000 + 1), /🎭 Pip 🔇$/);
+  assert.match(render.whipLane(s, null, Object.assign(c, { ascii: true }), plain, T0 + 600000 + 1), /\| Pip \[muted\]$/);
+});

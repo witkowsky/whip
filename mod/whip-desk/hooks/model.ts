@@ -55,6 +55,7 @@ export function toSnap(st: any, se: any, cf: any, now: number): WhipSnap {
     personality: cf && typeof cf.personality === 'string' ? cf.personality : 'classic',
     ascii: !!(cf && cf.ascii),
     hidden: !!(cf && cf.hidden),
+    muted: !!(cf && cf.muted),
     tapMinG: num(t.tapMinG, 0.05),
     slapG: num(t.slapG, 0.45),
     wallopG: num(t.wallopG, 0.9),
