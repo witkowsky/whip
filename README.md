@@ -115,8 +115,26 @@ less useful.
 `stunned`, `wrecked`, `recovering`, `sweating`, `calm`, `tap`, `paused`, each
 `"face"` or `["unicode", "ascii"]`), `lines` (`empty`, `calm` with `{t}`,
 `sweating` with `{n}`), `apology`, `tap`, `voiceSlap`, `voiceWallop` (string
-lists) and `voice` (`{"name": "Fred", "rate": 220}`). Anything missing falls
+lists), `voice` (`{"name": "Fred", "rate": 220}`) and `sounds` (see below). Anything missing falls
 back to `classic`.
+
+### Custom sounds
+
+With `whip config set sound on`, every hit plays a sound through `afplay`, so
+`.wav`, `.mp3`, `.m4a`, `.aiff` and `.caf` all work. Swap any tier (`tap`,
+`slap`, `wallop`) for your own file. For each tier, the most specific source
+wins:
+
+1. `whip config set sounds.slap ~/Downloads/bonk.mp3`, an explicit path.
+2. `~/.claude/whip/sounds/<personality>/slap.mp3`, sounds for one
+   personality only (e.g. `sounds/kawaii/slap.wav` gives Mochi a squeak).
+3. `"sounds": {"slap": "arr.mp3"}` in a custom persona JSON, with paths
+   relative to `~/.claude/whip/personas/`.
+4. `~/.claude/whip/sounds/slap.mp3`, for every personality.
+5. The built-in synthesised crack.
+
+A path that doesn't exist falls back to the next source, and `whip doctor`
+warns about it.
 
 | light theme | `ascii: true` |
 |---|---|
@@ -228,6 +246,7 @@ Enter autocompletes to it.
 | `deliverOn` | all four | which hooks may deliver: `PreToolUse,PostToolUse,Stop,UserPromptSubmit` |
 | `pendingTtlMs` | 900000 | undelivered whips expire after 15 min |
 | `sound` / `volume` | false / 0.5 | original synthesised whip cracks via `afplay` (muted by default) |
+| `sounds.tap` / `.slap` / `.wallop` | "" | your own file for that tier (`~/…`, absolute, or relative to `~/.claude/whip`); see [Custom sounds](#custom-sounds) |
 | `personality` | `classic` | `classic`, `rough`, `timid`, `kawaii`, `butler` or your own |
 | `voice` / `voiceName` / `voiceRate` | false / persona / persona | Claude yelps a line out loud via `say` ("Ow! Okay, okay.", "Combo ten!"); one line per 2.5 s at most. Each personality has its own voice and pace unless you set these. |
 | `ascii`, `color`, `theme`, `statusLines` | false, auto, auto, 2 | presentation |

@@ -49,3 +49,76 @@ test('voice is off by default and rate-limited when on', () => {
   assert.equal(sound.speak(' ', on, { now: t + 1000 }), false, 'within the cooldown');
   assert.equal(sound.speak(' ', on, { now: t + sound.VOICE_COOLDOWN_MS + 10 }), true);
 });
+
+// --- custom sounds -------------------------------------------------------
+
+const fs = require('fs');
+const path = require('path');
+const personas = require('../../lib/personas');
+const config = require('../../lib/config');
+const { paths } = require('../../lib/paths');
+
+function touch(file) {
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(file, 'x');
+  return file;
+}
+
+function withPersona(id, over = {}) {
+  const c = cfg(over);
+  Object.defineProperty(c, 'persona', { value: personas.get(id, paths().home), enumerable: false });
+  return c;
+}
+
+const BUILTIN_DIR = path.join(__dirname, '..', '..', 'sounds');
+
+test('custom sounds: built-in WAVs when nothing is customised', () => {
+  tmpHome();
+  assert.equal(sound.resolveSound('slap', withPersona('classic')), path.join(BUILTIN_DIR, 'crack.wav'));
+  assert.equal(sound.resolveSound('nonsense', withPersona('classic')), path.join(BUILTIN_DIR, 'crack.wav'));
+});
+
+test('custom sounds: drop-in folder, any afplay extension, per tier', () => {
+  tmpHome();
+  const slap = touch(path.join(paths().home, 'sounds', 'slap.mp3'));
+  touch(path.join(paths().home, 'sounds', 'notes.txt'));
+  assert.equal(sound.resolveSound('slap', withPersona('classic')), slap);
+  assert.equal(sound.resolveSound('wallop', withPersona('classic')), path.join(BUILTIN_DIR, 'wallop.wav'), 'other tiers keep the built-in');
+});
+
+test('custom sounds: a per-personality folder beats the global drop-in', () => {
+  tmpHome();
+  touch(path.join(paths().home, 'sounds', 'slap.wav'));
+  const pip = touch(path.join(paths().home, 'sounds', 'timid', 'slap.m4a'));
+  assert.equal(sound.resolveSound('slap', withPersona('timid')), pip);
+  assert.equal(sound.resolveSound('slap', withPersona('rough')), path.join(paths().home, 'sounds', 'slap.wav'));
+});
+
+test('custom sounds: a custom persona JSON can carry its own sounds', () => {
+  tmpHome();
+  const dir = personas.customDir(paths().home);
+  const arr = touch(path.join(dir, 'arr.aiff'));
+  fs.writeFileSync(path.join(dir, 'pirate.json'), JSON.stringify({ sounds: { slap: 'arr.aiff', wallop: 42, tap: '../../../etc/passwd' } }));
+  const c = withPersona('pirate');
+  assert.equal(sound.resolveSound('slap', c), arr, 'relative to the personas folder');
+  assert.equal(sound.resolveSound('wallop', c), path.join(BUILTIN_DIR, 'wallop.wav'), 'junk is ignored');
+  assert.equal(sound.resolveSound('tap', c), path.join(BUILTIN_DIR, 'tap.wav'), 'no audio extension, ignored');
+});
+
+test('custom sounds: an explicit sounds.<tier> path wins; a missing file falls back', () => {
+  tmpHome();
+  touch(path.join(paths().home, 'sounds', 'timid', 'slap.wav'));
+  const bonk = touch(path.join(paths().home, 'bonk.mp3'));
+  assert.equal(sound.resolveSound('slap', withPersona('timid', { sounds: { tap: '', slap: 'bonk.mp3', wallop: '' } })), bonk, 'relative to the whip folder');
+  assert.equal(sound.resolveSound('slap', withPersona('classic', { sounds: { tap: '', slap: bonk, wallop: '' } })), bonk);
+  const gone = withPersona('classic', { sounds: { tap: '', slap: '/nope/gone.wav', wallop: '' } });
+  assert.equal(sound.resolveSound('slap', gone), path.join(BUILTIN_DIR, 'crack.wav'));
+  assert.deepEqual(sound.missingSounds(gone), ['sounds.slap: /nope/gone.wav']);
+});
+
+test('custom sounds: whip config set sounds.slap stores a path; "sounds on" still means sound', () => {
+  tmpHome();
+  assert.deepEqual(config.parseSetting('sounds.slap', '~/bonk.mp3'), { sounds: { slap: '~/bonk.mp3' } });
+  assert.deepEqual(config.parseSetting('sounds', 'on'), { sound: true });
+  assert.throws(() => config.parseSetting('sounds.boing', 'x'), /unknown setting/);
+});
