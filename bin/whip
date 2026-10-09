@@ -366,7 +366,7 @@ const commands = {
   whip mute | unmute                       silence sound and voice / bring them back
   whip sessions                            known Claude Code sessions (→ = target)
   whip doctor                      check sensor, socket, hooks, status line, tmux
-  whip calibrate                           tap / slap / WALLOP wizard (needs the sensor)
+  whip calibrate [--yes]                   tap / slap / WALLOP wizard (needs the sensor); --yes saves without asking
   whip bridge [--socket PATH]              run the bridge in the foreground
   whip log [--n 20]                        recent hook log
   whip settings install|uninstall|status   statusLine wiring in ~/.claude/settings.json

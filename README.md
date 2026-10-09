@@ -21,6 +21,10 @@ Built for macOS on Apple Silicon (M2 or later, or M1 Pro). Node.js with zero
 npm dependencies, plus one small Go daemon for the sensor. No network calls,
 no telemetry, nothing crypto.
 
+**Requirements:** Claude Code **2.1.286+** (older versions reject the plugin's
+settings schema), Node.js 18+, and Go to build the sensor (`install.sh` offers
+`brew install go` if it's missing).
+
 ## Try it in 10 seconds (no sensor, no install)
 
 ```bash
@@ -182,8 +186,8 @@ claude plugin install whip@claudewhip        # ./install.sh does this one for yo
 claude plugin install whip-desk@claudewhip
 ```
 
-In the terminal the band is off by default, since the status line already
-shows the lane; turn on the plugin's `terminalBand` option to use the band
+In the terminal the band and the hit toasts are off by default, since the
+status line already shows the lane; turn on the plugin's `terminalBand` option to use the band
 there instead (the status line then drops its lane row, so it isn't shown
 twice). `node scripts/build-mod.js` regenerates the mod's persona data from
 `lib/personas.js`, and `claude plugin test mod/whip-desk` runs its tests.

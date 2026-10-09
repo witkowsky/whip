@@ -32,6 +32,13 @@ const S = {
   show: true,
 }
 
+// Hit toasts are for Claude Desktop; in a terminal-only session the status line
+// already shows the hit, unless terminalBand asks for the band there too.
+async function inApp($: $T): Promise<boolean> {
+  if (S.terminalBand) return true
+  return (await $.session.surfaces()).some(s => s !== 'terminal')
+}
+
 async function readJson($: $T, path: string): Promise<any> {
   try {
     return JSON.parse(await $.fs.read(path))
@@ -98,7 +105,7 @@ async function poll($: $T, force = false): Promise<void> {
     const [st, se, cf] = await Promise.all(files.map(f => readJson($, f)))
     const next = toSnap(st, se, cf, now)
     const lh = next.lastHit
-    if (lh && S.shownHit && lh.id !== S.shownHit && lh.tier !== 'tap' && now - lh.ts < 4000 && !next.hidden && S.show) {
+    if (lh && S.shownHit && lh.id !== S.shownHit && lh.tier !== 'tap' && now - lh.ts < 4000 && !next.hidden && S.show && (await inApp($))) {
       $.ui.toast(toastText(lh, personaOf(next, S.customs), next.ascii), { timeoutMs: 3000 })
     }
     S.shownHit = lh ? lh.id : S.shownHit || 'none'

@@ -71,7 +71,13 @@ NODE="$(command -v node)"
 NODE_MAJOR="$(node -p 'process.versions.node.split(".")[0]')"
 [ "$NODE_MAJOR" -ge 18 ] || die "node $NODE_MAJOR is too old; need 18+"
 command -v claude >/dev/null || die "claude (Claude Code CLI) not found on PATH"
-info "node $(node -v) · $(claude --version 2>/dev/null | head -1)"
+# The plugin manifest's userConfig schema is only accepted by recent Claude Code.
+MIN_CLAUDE=2.1.286
+CLAUDE_VER="$(claude --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -1)"
+[ -n "$CLAUDE_VER" ] || die "could not read the Claude Code version (claude --version)"
+[ "$(printf '%s\n%s\n' "$MIN_CLAUDE" "$CLAUDE_VER" | sort -t. -k1,1n -k2,2n -k3,3n | head -1)" = "$MIN_CLAUDE" ] \
+  || die "Claude Code $CLAUDE_VER is too old; need $MIN_CLAUDE+ (claude update)"
+info "node $(node -v) · Claude Code $CLAUDE_VER"
 if [ "$SENSOR" = 1 ] && [ "$(uname -m)" != arm64 ]; then
   info "not Apple Silicon: skipping the sensor"
   SENSOR=0
@@ -84,17 +90,25 @@ chmod 700 "$WHIP_HOME"
 
 # ---------------------------------------------------------------- plugin
 step "Installing the Claude Code plugin (hooks + slash commands)"
+# A manifest Claude Code rejects installs fine but silently never loads; catch it here.
+VALIDATE="$(claude plugin validate "$REPO/.claude-plugin/plugin.json" 2>&1)" \
+  || die "the plugin manifest doesn't validate on Claude Code $CLAUDE_VER:
+$VALIDATE"
 # Capture first: `cmd | grep -q` under pipefail can fail with SIGPIPE.
 MARKETS="$(claude plugin marketplace list 2>/dev/null || true)"
 if printf '%s' "$MARKETS" | grep -q 'claudewhip'; then
-  claude plugin marketplace update claudewhip >/dev/null 2>&1 || true
+  claude plugin marketplace update claudewhip >/dev/null 2>&1 || info "warning: marketplace update failed; using the cached copy"
 else
   claude plugin marketplace add "$REPO" >/dev/null
 fi
 PLUGINS="$(claude plugin list 2>/dev/null || true)"
 if printf '%s' "$PLUGINS" | grep -q 'whip@claudewhip'; then
-  claude plugin update whip@claudewhip >/dev/null 2>&1 || true
-  claude plugin enable whip@claudewhip >/dev/null 2>&1 || true
+  # "already up to date" / "already enabled" exit 0; a real failure must stop us.
+  OUT="$(claude plugin update whip@claudewhip 2>&1)" || die "claude plugin update whip@claudewhip failed:
+$OUT"
+  OUT="$(claude plugin enable whip@claudewhip 2>&1)" || printf '%s' "$OUT" | grep -qi 'already' \
+    || die "claude plugin enable whip@claudewhip failed:
+$OUT"
 else
   claude plugin install whip@claudewhip --scope user >/dev/null
 fi
@@ -120,7 +134,12 @@ SPIN_FLAG=""; [ "$SPINNER" = 1 ] && SPIN_FLAG="--spinner"
 # ---------------------------------------------------------------- sensor (root)
 if [ "$SENSOR" = 1 ]; then
   step "Building the sensor daemon (Go)"
-  command -v go >/dev/null || die "go not found (brew install go), or re-run with --no-sensor"
+  if ! command -v go >/dev/null; then
+    command -v brew >/dev/null || die "go not found: install it from https://go.dev/dl, or re-run with --no-sensor"
+    [ "$(ask "go (needed to build the sensor) not found. install it with Homebrew? [Y/n]" y)" != n ] \
+      || die "go not found (brew install go), or re-run with --no-sensor"
+    brew install go || die "brew install go failed"
+  fi
   # Always build (Go caches it): a fix in any sensord/*.go must reach the root binary.
   (cd "$REPO/sensord" && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o "$REPO/build/whip-sensord" .)
   "$REPO/build/whip-sensord" --version >/dev/null

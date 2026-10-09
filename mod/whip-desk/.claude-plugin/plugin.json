@@ -13,8 +13,8 @@
     },
     "terminalBand": {
       "type": "boolean",
-      "title": "Also draw the band in the terminal",
-      "description": "Off by default. On: the band replaces the whip lane in the terminal status line.",
+      "title": "Also draw the band and hit toasts in the terminal",
+      "description": "Off by default. On: the band replaces the whip lane in the terminal status line, and hits pop a toast there too.",
       "default": false
     }
   },
